@@ -4,7 +4,6 @@ package alternativa.editor
    import alternativa.editor.eventjournal.EventJournalItem;
    import alternativa.editor.prop.MeshProp;
    import alternativa.editor.prop.Prop;
-   import alternativa.editor.scene.CursorScene;
    import alternativa.editor.scene.EditorScene;
    import alternativa.editor.scene.MainScene;
    import alternativa.editor.scene.OccupyMap;
@@ -38,7 +37,7 @@ package alternativa.editor
       
       private static const cameraOffset:Point3D = new Point3D();
       
-      public var cursorScene:CursorScene;
+      //public var cursorScene:CursorScene;
       
       public var mainScene:MainScene;
       
@@ -201,11 +200,11 @@ package alternativa.editor
       {
          removeEventListener(Event.ADDED_TO_STAGE,this.onAddedToStage);
          this.keyMapper.startListening(stage);
-         this.cursorScene = new CursorScene(stage,this);
-         this.mainScene = new MainScene();
-         this.cursorScene.occupyMap = this.mainScene.occupyMap;
+         //this.mainScene = new CursorScene(stage,this);
+         this.mainScene = new MainScene(stage,this);
+         //this.mainScene.occupyMap = this.mainScene.occupyMap;
          addChild(this.mainScene.view);
-         addChild(this.cursorScene.view);
+         //addChild(this.mainScene.view);
          this.boundBoxesOverlay = new Shape();
          addChild(this.boundBoxesOverlay);
          this.dominationOverlay = new Shape();
@@ -214,7 +213,7 @@ package alternativa.editor
          addChild(this.selectionRectOverlay);
          this.initListeners();
          this.eventJournal = new EventJournal();
-         var loc2:Object3D = this.cursorScene.camera;
+         var loc2:Object3D = this.mainScene.camera;
          this.cameraDistance = Math.sqrt(loc2.x * loc2.x + loc2.y * loc2.y + loc2.z * loc2.z);
       }
       
@@ -246,7 +245,7 @@ package alternativa.editor
             if(this.mainScene.selectedProp != null)
             {
                this.startSelectionCoords = new Point3D().copyFromObject3D(this.mainScene.selectedProp);
-               this.cursorScene.visible = false;
+               this.mainScene.objectVisible = false;
             }
          }
          this.mouseDown = true;
@@ -298,17 +297,17 @@ package alternativa.editor
             {
                if(this.propDown)
                {
-                  if(this.cursorScene.object)
+                  if(this.mainScene.object)
                   {
-                     this.cursorScene.object.z = this.clickZ;
+                     this.mainScene.object.z = this.clickZ;
                   }
                   this.propDown = false;
                }
-               this.cursorScene.moveCursorByMouse();
-               if(!this.cursorScene.visible)
+               this.mainScene.moveCursorByMouse();
+               if(!this.mainScene.objectVisible)
                {
                   this.mainScene.deselectProps();
-                  this.cursorScene.visible = true;
+                  this.mainScene.objectVisible = true;
                }
             }
             else if(param1.shiftKey)
@@ -416,7 +415,7 @@ package alternativa.editor
             }
             else if(this.middleDown)
             {
-               loc9 = this.cursorScene.camera.transformation;
+               loc9 = this.mainScene.camera.transformation;
                loc10 = new Point3D(loc9.a,loc9.e,loc9.i);
                loc11 = new Point3D(loc9.b,loc9.f,loc9.j);
                loc10.multiply(10 * (this.prevMoveX - param1.stageX));
@@ -424,7 +423,7 @@ package alternativa.editor
                loc12 = new Point3D(loc9.d,loc9.h,loc9.l);
                loc12.add(loc10);
                loc12.add(loc11);
-               this.cursorScene.cameraController.setObjectPos(this.cursorScene.container.globalToLocal(loc12.toVector3D()));
+               this.mainScene.cameraController.setObjectPos(this.mainScene.container.globalToLocal(loc12.toVector3D()));
             }
             else if(this.mouseDown)
             {
@@ -475,7 +474,7 @@ package alternativa.editor
                   {
                      this.mainScene.selectProps(this.mainScene.getPropsUnderRect(loc15,loc13,loc14,true));
                   }
-                  this.cursorScene.visible = false;
+                  this.mainScene.objectVisible = false;
                }
             }
          }
@@ -500,18 +499,18 @@ package alternativa.editor
          if(this.mainScene.selectedProp)
             loc2.copyFromObject3D(this.mainScene.selectedProp)
          else
-            loc2.copyFromVector3D(this.cursorScene.camera.localToGlobal(cameraPointV3));
-         var loc3:Point3D = new Point3D().copyFromVector3D(this.cursorScene.container.localToGlobal(this.cursorScene.cameraController.coords3D));
+            loc2.copyFromVector3D(this.mainScene.camera.localToGlobal(cameraPointV3));
+         var loc3:Point3D = new Point3D().copyFromVector3D(this.mainScene.container.localToGlobal(this.mainScene.cameraController.coords3D));
          var loc4:Point3D = loc3.clone();
          var loc5:Point3D = Point3D.difference(loc2,loc3);
          if(loc5.length < 500)
          {
-            loc5 = Point3D.difference(new Point3D().copyFromVector3D(this.cursorScene.camera.localToGlobal(cameraPointV3)),loc3);
+            loc5 = Point3D.difference(new Point3D().copyFromVector3D(this.mainScene.camera.localToGlobal(cameraPointV3)),loc3);
          }
          loc5.normalize();
          loc5.multiply(param1 * 100);
          loc3.add(loc5);
-         this.cursorScene.cameraController.setObjectPos(this.cursorScene.container.globalToLocal(loc3.toVector3D()));
+         this.mainScene.cameraController.setObjectPos(this.mainScene.container.globalToLocal(loc3.toVector3D()));
       }
       
       private function onMouseOut(param1:MouseEvent) : void
@@ -519,7 +518,7 @@ package alternativa.editor
          if(param1.buttonDown)
          {
             parent.addEventListener(MouseEvent.ROLL_OVER,this.onMouseOver);
-            this.cursorScene.containerController.setMouseLook(false);
+            this.mainScene.containerController.setMouseLook(false);
          }
       }
       
@@ -553,15 +552,15 @@ package alternativa.editor
             }
             else
             {
-               loc2 = new Point3D().copyFromVector3D(this.cursorScene.camera.localToGlobal(new Vector3D(0,0,this.cameraDistance)));
+               loc2 = new Point3D().copyFromVector3D(this.mainScene.camera.localToGlobal(new Vector3D(0,0,this.cameraDistance)));
             }
-            loc4 = this.cursorScene.containerController.coords.clone();
+            loc4 = this.mainScene.containerController.coords.clone();
             loc4.subtract(loc2);
-            loc5 = new Point3D().copyFromVector3D(this.cursorScene.container.localToGlobal(this.cursorScene.cameraController.coords3D));
+            loc5 = new Point3D().copyFromVector3D(this.mainScene.container.localToGlobal(this.mainScene.cameraController.coords3D));
             loc5.add(loc4);
-            this.cursorScene.cameraController.setObjectPos(this.cursorScene.container.globalToLocal(loc5.toVector3D()));
-            this.cursorScene.containerController.coords = loc2;
-            this.cursorScene.containerController.setMouseLook(true);
+            this.mainScene.cameraController.setObjectPos(this.mainScene.container.globalToLocal(loc5.toVector3D()));
+            this.mainScene.containerController.coords = loc2;
+            this.mainScene.containerController.setMouseLook(true);
          }
          else
          {
@@ -572,28 +571,28 @@ package alternativa.editor
       private function onMiddleMouseUp(param1:MouseEvent) : void
       {
          this.middleDown = false;
-         this.cursorScene.containerController.setMouseLook(false);
+         this.mainScene.containerController.setMouseLook(false);
       }
       
       private function onEnterFrame(param1:Event) : void
       {
-         this.cursorScene.containerController.yawLeft(this.keyMapper.keyPressed(0));
-         this.cursorScene.containerController.yawRight(this.keyMapper.keyPressed(1));
-         this.cursorScene.containerController.pitchDown(this.keyMapper.keyPressed(6));
-         this.cursorScene.containerController.pitchUp(this.keyMapper.keyPressed(7));
-         this.cursorScene.containerController.speed = 2000;
-         this.cursorScene.containerController.moveLeft(this.keyMapper.keyPressed(2));
-         this.cursorScene.containerController.moveRight(this.keyMapper.keyPressed(3));
-         this.cursorScene.containerController.moveForward(this.keyMapper.keyPressed(4));
-         this.cursorScene.containerController.moveBack(this.keyMapper.keyPressed(5));
-         this.cursorScene.cameraController.processInput();
-         this.cursorScene.containerController.processInput();
-         this.cursorScene.calculate();
-         this.cameraTransformation = this.cursorScene.camera.transformation;
+         this.mainScene.containerController.yawLeft(this.keyMapper.keyPressed(0));
+         this.mainScene.containerController.yawRight(this.keyMapper.keyPressed(1));
+         this.mainScene.containerController.pitchDown(this.keyMapper.keyPressed(6));
+         this.mainScene.containerController.pitchUp(this.keyMapper.keyPressed(7));
+         this.mainScene.containerController.speed = 2000;
+         this.mainScene.containerController.moveLeft(this.keyMapper.keyPressed(2));
+         this.mainScene.containerController.moveRight(this.keyMapper.keyPressed(3));
+         this.mainScene.containerController.moveForward(this.keyMapper.keyPressed(4));
+         this.mainScene.containerController.moveBack(this.keyMapper.keyPressed(5));
+         this.mainScene.cameraController.processInput();
+         this.mainScene.containerController.processInput();
+         //this.mainScene.calculate();
+         this.cameraTransformation = this.mainScene.camera.transformation;
          cameraOffset.x = this.cameraTransformation.d;
          cameraOffset.y = this.cameraTransformation.h;
          cameraOffset.z = this.cameraTransformation.l;
-         this.cursorScene.drawAxis(this.cameraTransformation);
+         this.mainScene.drawAxis(this.cameraTransformation);
          var loc2:Point3D = this.cameraTransformation.getRotations();
          this.mainScene.setCameraPosition(cameraOffset,loc2.x,loc2.y,loc2.z);
          this.mainScene.calculate();
@@ -631,9 +630,9 @@ package alternativa.editor
          }
          getMeshBounds(loc2,this.min,this.max);
          fillBBPoints(this.min,this.max,this.bbPoints);
-         var loc3:Number = this.cursorScene.camera.focalLength;
-         var loc6:Number = 0.5 * this.cursorScene.view.width;
-         var loc7:Number = 0.5 * this.cursorScene.view.height;
+         var loc3:Number = this.mainScene.camera.focalLength;
+         var loc6:Number = 0.5 * this.mainScene.view.width;
+         var loc7:Number = 0.5 * this.mainScene.view.height;
          loc5 = 0;
          while(loc5 < 8)
          {
@@ -686,7 +685,7 @@ package alternativa.editor
       
       private function onResize(param1:Event = null) : void
       {
-         this.cursorScene.viewResize(parent.width - 20,parent.height - 40);
+         this.mainScene.viewResize(parent.width - 20,parent.height - 40);
          this.mainScene.viewResize(parent.width - 20,parent.height - 40);
       }
       
@@ -703,9 +702,9 @@ package alternativa.editor
             case Keyboard.NUMBER_0:
                if(param1.ctrlKey)
                {
-                  this.cursorScene.camera.rotationX = this.cursorScene.camera.rotationX = this.cursorScene.camera.rotationX = -2.0943951023931953;
-                  this.cursorScene.cameraController.coords = new Point3D(250,-7800,4670);
-                  loc5 = this.cursorScene.camera;
+                  this.mainScene.camera.rotationX = this.mainScene.camera.rotationX = this.mainScene.camera.rotationX = -2.0943951023931953;
+                  this.mainScene.cameraController.coords = new Point3D(250,-7800,4670);
+                  loc5 = this.mainScene.camera;
                   this.cameraDistance = Math.sqrt(loc5.x * loc5.x + loc5.y * loc5.y + loc5.z * loc5.z);
                }
                break;
@@ -713,9 +712,9 @@ package alternativa.editor
             case KeyboardUtils.DOWN:
             case KeyboardUtils.LEFT:
             case KeyboardUtils.RIGHT:
-               if(this.cursorScene.visible)
+               if(this.mainScene.objectVisible)
                {
-                  this.cursorScene.moveByArrows(param1.keyCode);
+                  this.mainScene.moveByArrows(param1.keyCode);
                   break;
                }
                loc2 = this.mainScene.selectedProp;
@@ -729,10 +728,10 @@ package alternativa.editor
                this.verticalMoving = true;
                break;
             case KeyboardUtils.W:
-               if(this.cursorScene.visible)
+               if(this.mainScene.objectVisible)
                {
-                  this.cursorScene.object.z += EditorScene.snapByHalf ? EditorScene.VERTICAL_GRID_RESOLUTION_2 : EditorScene.VERTICAL_GRID_RESOLUTION_1;
-                  this.cursorScene.updateMaterial();
+                  this.mainScene.object.z += EditorScene.snapByHalf ? EditorScene.VERTICAL_GRID_RESOLUTION_2 : EditorScene.VERTICAL_GRID_RESOLUTION_1;
+                  this.mainScene.updateMaterial();
                   break;
                }
                loc2 = this.mainScene.selectedProp;
@@ -748,10 +747,10 @@ package alternativa.editor
             case KeyboardUtils.S:
                if(!param1.ctrlKey)
                {
-                  if(this.cursorScene.visible)
+                  if(this.mainScene.objectVisible)
                   {
-                     this.cursorScene.object.z -= EditorScene.snapByHalf ? EditorScene.VERTICAL_GRID_RESOLUTION_2 : EditorScene.VERTICAL_GRID_RESOLUTION_1;
-                     this.cursorScene.updateMaterial();
+                     this.mainScene.object.z -= EditorScene.snapByHalf ? EditorScene.VERTICAL_GRID_RESOLUTION_2 : EditorScene.VERTICAL_GRID_RESOLUTION_1;
+                     this.mainScene.updateMaterial();
                      break;
                   }
                   loc2 = this.mainScene.selectedProp;
@@ -770,7 +769,7 @@ package alternativa.editor
                loc2 = this.mainScene.selectedProp;
                if(loc2)
                {
-                  loc6 = this.cursorScene.object;
+                  loc6 = this.mainScene.object;
                   if(loc6)
                   {
                      loc6.setPositionXYZ(loc2.x,loc2.y,loc2.z);
@@ -781,24 +780,24 @@ package alternativa.editor
                   }
                   loc7 = this.mainScene.deleteProps();
                   this.eventJournal.addEvent(EventJournal.DELETE,loc7);
-                  this.cursorScene.visible = true;
+                  this.mainScene.objectVisible = true;
                }
                break;
             case KeyboardUtils.Z:
-               if(this.cursorScene.visible)
+               if(this.mainScene.objectVisible)
                {
-                  this.cursorScene.rotateCursorCounterClockwise();
-                  this.cursorScene.updateMaterial();
+                  this.mainScene.rotateCursorCounterClockwise();
+                  this.mainScene.updateMaterial();
                   break;
                }
                this.eventJournal.addEvent(EventJournal.ROTATE,this.mainScene.selectedProps.clone(),false);
                this.mainScene.rotateCounterClockwise();
                break;
             case KeyboardUtils.X:
-               if(this.cursorScene.visible)
+               if(this.mainScene.objectVisible)
                {
-                  this.cursorScene.rotateCursorClockwise();
-                  this.cursorScene.updateMaterial();
+                  this.mainScene.rotateCursorClockwise();
+                  this.mainScene.updateMaterial();
                   break;
                }
                this.eventJournal.addEvent(EventJournal.ROTATE,this.mainScene.selectedProps.clone(),true);
@@ -808,13 +807,13 @@ package alternativa.editor
                loc2 = this.mainScene.selectedProp;
                if(loc2)
                {
-                  if(this.cursorScene.object)
+                  if(this.mainScene.object)
                   {
-                     this.cursorScene.object.setPositionXYZ(loc2.x,loc2.y,loc2.z);
-                     this.cursorScene.object.snapToGrid();
+                     this.mainScene.object.setPositionXYZ(loc2.x,loc2.y,loc2.z);
+                     this.mainScene.object.snapToGrid();
                   }
                   this.mainScene.deselectProps();
-                  this.cursorScene.visible = true;
+                  this.mainScene.objectVisible = true;
                }
                break;
             case Keyboard.NUMPAD_ADD:
@@ -866,14 +865,14 @@ package alternativa.editor
       public function clear() : void
       {
          this.mainScene.clear();
-         this.cursorScene.clear();
+         this.mainScene.clear();
       }
       
       public function set snapMode(param1:Boolean) : void
       {
          this._snapMode = param1;
          this.mainScene.snapMode = param1;
-         this.cursorScene.snapMode = param1;
+         this.mainScene.snapMode = param1;
       }
       
       public function get snapMode() : Boolean
@@ -883,13 +882,13 @@ package alternativa.editor
       
       public function addProp(param1:Prop) : void
       {
-         var loc2:Prop = this.mainScene.addProp(param1,new Point3D().copyFromObject3D(this.cursorScene.object),this.cursorScene.object.rotationZ);
+         var loc2:Prop = this.mainScene.addProp(param1,new Point3D().copyFromObject3D(this.mainScene.object),this.mainScene.object.rotationZ);
          var loc3:Set = new Set();
          loc3.add(loc2);
          this.eventJournal.addEvent(EventJournal.ADD,loc3);
-         setTimeout(this.cursorScene.updateMaterial,200);
+         setTimeout(this.mainScene.updateMaterial,200);
          loc2.addEventListener(MouseEvent3D.MOUSE_DOWN,this.onPropMouseDown);
-         if(this._snapMode && !this.cursorScene.freeState && (this.multiplePropMode == MultiPropMode.NONE && this.cursorScene.occupyMap.isConflict(loc2) || this.multiplePropMode == MultiPropMode.GROUP && this.cursorScene.occupyMap.isConflictGroup(loc2)))
+         if(this._snapMode && !this.mainScene.freeState && (this.multiplePropMode == MultiPropMode.NONE && this.mainScene.occupyMap.isConflict(loc2) || this.multiplePropMode == MultiPropMode.GROUP && this.mainScene.occupyMap.isConflictGroup(loc2)))
          {
             Alert.show("This location is occupied. Continue?","",Alert.YES | Alert.NO,this,this.alertConflict,null,Alert.YES);
          }
@@ -907,9 +906,9 @@ package alternativa.editor
          if(loc1)
          {
             this.mainScene.undo(loc1);
-            if(this.cursorScene.visible)
+            if(this.mainScene.objectVisible)
             {
-               this.cursorScene.updateMaterial();
+               this.mainScene.updateMaterial();
             }
          }
       }
@@ -920,9 +919,9 @@ package alternativa.editor
          if(loc1)
          {
             this.mainScene.redo(loc1);
-            if(this.cursorScene.visible)
+            if(this.mainScene.objectVisible)
             {
-               this.cursorScene.updateMaterial();
+               this.mainScene.updateMaterial();
             }
          }
       }
